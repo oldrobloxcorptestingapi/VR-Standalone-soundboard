@@ -4,6 +4,7 @@ an soundboard that work on meta quest ANDROID AND WINDOWS ONLY
 How to setup
 # Download the .exe file in releases on this repo of OUSOURCE ENGINE
 this will get you the server
+# Make Sure To Go To The Server Tab
 
 ## Step 2
 # Key Mapper (REQUIRED)
