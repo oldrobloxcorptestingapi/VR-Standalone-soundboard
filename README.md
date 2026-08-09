@@ -6,10 +6,26 @@ A local Node.js server that lets you trigger sound clips stored **on your Androi
 
 ---
 
+## What you'll need
+
+A quick checklist before you start — full details for each are below.
+
+- [ ] **PC** with **Node.js** and **ADB (Android Platform Tools)** installed
+- [ ] **Android phone** with Developer Options + Wireless Debugging enabled (its USB-C port will be occupied by the Voicemod Key, so ADB has to run over Wi-Fi)
+- [ ] Your phone and PC on the **same Wi-Fi network**
+- [ ] **Android VR headset** (Meta Quest, Pico, etc.) on the same Wi-Fi network as your PC
+- [ ] **Key Mapper** app (v4.3.0) installed on the **VR headset**, with **Expert Mode** enabled (required to detect VR controllers)
+- [ ] **Voicemod Key** hardware dongle
+- [ ] **Voicemod app** installed on your **phone**
+- [ ] **3.5mm-to-USB-C audio adapter**
+- [ ] Your sound files (`.mp3`/`.wav`) copied onto your **phone**
+
+---
+
 ## How it works
 
 1. Your sound files (`.mp3`/`.wav`) live on **your phone's** storage (e.g. `/sdcard/Download/`) — the phone is what actually plays them.
-2. **The soundboard server (`server.js`) runs on your PC**, connected to your **phone** via ADB.
+2. **The soundboard server (`server.js`) runs on your PC**, connected to your **phone** via **ADB over Wi-Fi** (not USB — your phone's USB-C port is busy connecting to the Voicemod Key, so wireless ADB is required here).
 3. **Key Mapper is installed on the VR headset**, where it watches for controller button presses.
 4. When a mapped button is pressed, Key Mapper fires an **HTTP Request** action over your local Wi-Fi network to the soundboard server running on your PC (e.g. `http://<your-pc-ip>:3000/left-grip`).
 5. The server receives that request and uses **ADB** to tell your **phone** to open and play the matching sound file.
@@ -19,8 +35,8 @@ A local Node.js server that lets you trigger sound clips stored **on your Androi
 
 | Device | Role |
 |---|---|
-| **PC** | Runs `server.js` (this soundboard server). Talks to the phone over ADB. |
-| **Phone** | Stores and plays the sound files (ADB target). Also runs the **Voicemod app** and connects to the Voicemod Key — this is where all Voicemod setting changes happen, and it must be open at boot. |
+| **PC** | Runs `server.js` (this soundboard server). Talks to the phone over **ADB via Wi-Fi**. |
+| **Phone** | Stores and plays the sound files (ADB target, connected wirelessly). Its **USB-C port is physically plugged into the Voicemod Key** and runs the **Voicemod app** — this is where all Voicemod setting changes happen, and it must be open at boot. |
 | **VR headset** | Runs **Key Mapper**, which sends the HTTP request when a controller button is pressed. Also receives the processed audio from the Voicemod Key (via the 3.5mm-to-USB-C adapter) as its external microphone input. |
 
 ---
@@ -41,13 +57,13 @@ Before you start, make sure you have:
 
 - **Node.js** (v18 or newer recommended) — [nodejs.org](https://nodejs.org)
 - **ADB (Android Platform Tools)** installed on your **PC** and available on your system PATH — [Download here](https://developer.android.com/tools/releases/platform-tools)
-- An **Android phone** (this is what stores/plays the sounds) with **Developer Options** and **USB Debugging** enabled
-- A USB cable (or ADB over Wi-Fi) connecting the **phone** to your PC
+- An **Android phone** (this is what stores/plays the sounds) with **Developer Options** and **Wireless Debugging** enabled
+- Your phone and PC connected via **ADB over Wi-Fi** — this is required, not optional, because the phone's USB-C port will be plugged into the Voicemod Key and can't also be plugged into your PC
 - An **Android VR headset** (Meta Quest, Pico, etc.) on the same **local Wi-Fi network** as your PC (required for Key Mapper's HTTP requests to reach the server)
 - The **Key Mapper** app installed **on the VR headset** (see credit section below) — not on your phone or PC
 - A **Voicemod Key** hardware dongle + the **Voicemod app** installed on your **phone**, for routing sound into voice chat
 - A **3.5mm-to-USB-C audio adapter**, for connecting the Voicemod Key to your VR headset
-- Your sound files (`.mp3` or `.wav`) copied onto your **phone**, e.g. into `/sdcard/Download/`
+- Your sound files (`.mp3` or `.wav`) copied onto your **phone**, e.g. into `/sdcard/Download/` — this is also where Android puts files by default if you just download them directly on the phone, so check there first
 
 ---
 
@@ -59,17 +75,30 @@ Open a terminal in this folder and run:
 npm install
 ```
 
-### 2. Enable USB debugging on your phone
-1. On your **phone**, go to **Settings → About** and tap **Build Number** 7 times to unlock Developer Options.
-2. Go to **Settings → Developer Options** and enable **USB Debugging**.
-3. Connect the **phone** to your PC via USB (or set up ADB over Wi-Fi).
-4. On the phone, accept the "Allow USB Debugging" prompt when it appears.
+### 2. Enable Wireless Debugging on your phone
+Since your phone's USB-C port will be occupied by the Voicemod Key, you need ADB to connect over **Wi-Fi**, not a cable. Make sure your phone and PC are on the **same Wi-Fi network**, then:
+
+1. On your **phone**, go to **Settings → About Phone** and tap **Build Number** 7 times to unlock Developer Options.
+2. Go to **Settings → Developer Options** and enable **Wireless debugging**.
+3. Tap into **Wireless debugging → Pair device with pairing code**. This shows an IP address, a port number, and a 6-digit pairing code.
+4. On your **PC**, run:
+   ```bash
+   adb pair <ip-address>:<pairing-port>
+   ```
+   and enter the 6-digit code when prompted. This is a **one-time** pairing step.
+5. Back on the phone's main **Wireless debugging** screen, note the IP address and port shown there (this port is usually different from the pairing port), then on your PC run:
+   ```bash
+   adb connect <ip-address>:<port>
+   ```
+   You only need to re-run `adb connect` (not the pairing step) each time you reconnect, as long as both devices stay on the same network.
+
+> No USB cable to the PC is needed at any point — the phone's USB-C port stays free for the Voicemod Key.
 
 ### 3. Verify ADB sees your phone
 ```bash
 adb devices
 ```
-You should see your phone listed with `device` next to it (not `unauthorized` or `offline`). The server will refuse to play sounds unless **exactly one** device is connected.
+You should see your phone listed (as `<ip>:<port>`) with `device` next to it (not `unauthorized` or `offline`). The server will refuse to play sounds unless **exactly one** device is connected.
 
 ### 4. Copy your sound files to your phone
 Push your sound clips onto your phone's storage, for example:
@@ -77,6 +106,8 @@ Push your sound clips onto your phone's storage, for example:
 adb push "MySound.mp3" /sdcard/Download/
 ```
 Note the exact path — you'll need it in the next step.
+
+> 💡 **Heads up:** if you just download a sound file directly on your phone (e.g. from a browser, Discord, or a messaging app) instead of pushing it with ADB, Android puts it in `/sdcard/Download/` **by default**. So there's a good chance your file is already sitting in that folder — just double check the exact filename before entering it in the next step.
 
 ### 5. Configure your sound routes
 Open `server.js` and find the `ROUTES` block near the top:
@@ -118,19 +149,23 @@ You should hear the sound play through your connected phone. Visiting the same U
 
 ## Setting up Key Mapper (to trigger sounds from controller buttons)
 
+> 🚨 **Emergency note:** the VR headset can sometimes have its own **Wireless Debugging** toggled on (some headsets enable it automatically or you may have flipped it on previously for other setup). Since only your **phone** should be connected to your PC over ADB, check `adb devices` on your PC — if the **headset** shows up as a paired/connected device instead of (or alongside) the phone, **go into the headset's Developer Options and turn Wireless Debugging OFF**. The headset does not need ADB for anything in this setup. Turning it off will **not** break Key Mapper — Key Mapper's **Expert Mode** (see below) works independently of ADB/wireless debugging.
+
 **Key Mapper** is an Android app that lets you remap physical buttons/keys — including VR controller inputs recognized as key events — to custom actions. **Install it directly on your VR headset** (not on your phone or PC) — that's what lets a real button press on your controller reach your soundboard server on your PC.
 
 1. Sideload/install Key Mapper **on the VR headset** from the official release:
    **https://github.com/keymapperorg/KeyMapper/releases/tag/v4.3.0**
-2. On the headset, open Key Mapper and create a new keymap.
-3. Set the **trigger** to the controller button you want to use (Key Mapper can record the input directly).
-4. Set the **action type to "HTTP Request"** (not "Open URL") and enter your PC's route, e.g.:
+2. On the headset, open Key Mapper and **enable Expert Mode** (in Key Mapper's settings/menu). **This is required** — without Expert Mode, Key Mapper will not be able to detect your VR controllers as an input source.
+3. Create a new keymap.
+4. Set the **trigger** to the controller button you want to use (Key Mapper can record the input directly).
+5. Set the **action type to "HTTP Request"** (not "Open URL") and enter your PC's route, e.g.:
    ```
    http://<your-pc-local-ip>:3000/left-grip
    ```
    This must point at your **PC's local IP address on your Wi-Fi network** — not `localhost` and not the headset's own IP, since the request needs to leave the headset and reach the PC running `server.js`. Find your PC's IP with `ipconfig` (Windows) or `ifconfig`/`ip a` (Mac/Linux), e.g. `http://192.168.1.50:3000/left-grip`.
-5. Save the keymap and make sure it's enabled (Key Mapper needs Accessibility Service permission on the headset to intercept controller key events — it will prompt you for this on first setup).
-6. Make sure the headset and PC are connected to the **same Wi-Fi network**, then press the mapped button — it should trigger your soundboard server and play the sound.
+6. Save the keymap and make sure it's enabled (Key Mapper needs Accessibility Service permission on the headset to intercept controller key events — it will prompt you for this on first setup).
+7. Make sure the headset and PC are connected to the **same Wi-Fi network**, then press the mapped button — it should trigger your soundboard server and play the sound.
+
 
 ---
 
@@ -161,7 +196,9 @@ The soundboard server makes your **phone** *play* the sound file — the **Voice
 
 ## Troubleshooting
 
-- **"No device or too many devices connected"** — Run `adb devices` and make sure exactly one **phone** shows as `device`. Unplug/replug or re-authorize if needed.
+- **"No device or too many devices connected"** — Run `adb devices` and make sure exactly one **phone** shows as `device`. If the **VR headset** also shows up here, its Wireless Debugging is on by mistake — go turn it **off** in the headset's Developer Options (it isn't needed and will cause the server to refuse to play sounds since it expects exactly one connected device). Since this is a Wi-Fi connection to the phone, it can also drop if the phone sleeps or switches networks — re-run `adb connect <ip>:<port>` to reconnect.
+- **Key Mapper doesn't detect controller input** — Make sure **Expert Mode** is turned on in Key Mapper's settings on the headset; without it, Key Mapper cannot see VR controller inputs at all.
+- **ADB connection keeps dropping / phone goes "offline"** — Wireless ADB connections can disconnect when the phone's screen locks or it enters deep sleep. Keep the phone's screen-timeout generous (or plugged into power) during your session, and re-run `adb connect <ip>:<port>` if it drops.
 - **"Sound path invalid"** — Double-check the `filePath` in `ROUTES` matches exactly where the file lives on your **phone** (case-sensitive), and that the extension is `.mp3` or `.wav`.
 - **Sound doesn't play but no error** — Make sure the phone's media volume isn't muted, and that it has a default app assigned to open audio files via intent.
 - **Key Mapper button doesn't trigger anything** — Confirm Key Mapper's Accessibility permission is enabled on the headset, that the action type is set to **HTTP Request** (not "Open URL"), and that you're using your PC's actual local Wi-Fi IP (not `localhost`).
