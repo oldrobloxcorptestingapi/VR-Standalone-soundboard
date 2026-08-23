@@ -1,7 +1,7 @@
 ﻿{
     "version":  "3.3",
-    "url":  "https://github.com/oldrobloxcorptestingapi/VR-Standalone-soundboard/releases/download/3.2/VR.Soundboard.Studio.exe",
-    "sha256":  "dc312381209fd3b00aff67e8c9eb02d80f8bc6ef7eeb3ecefdc1f39ec0e21b49",
+    "url":  "https://github.com/oldrobloxcorptestingapi/VR-Standalone-soundboard/releases/download/v3.3/VR.Soundboard.Studio.exe",
+    "sha256":  "27851b2cbd19f9cb287dbe06773573b0970193f06a4005172cdcaafce0a2b8e5",
     "notes":  "Bug fixes and improvements.",
     "mandatory":  false
 }
