@@ -1,7 +1,7 @@
 ﻿{
-    "version":  "3.3",
-    "url":  "https://github.com/oldrobloxcorptestingapi/VR-Standalone-soundboard/releases/download/v3.3/VR.Soundboard.Studio.exe",
-    "sha256":  "27851b2cbd19f9cb287dbe06773573b0970193f06a4005172cdcaafce0a2b8e5",
-    "notes":  "Bug fixes and improvements.",
-    "mandatory":  false
+    "version":  "3.4",
+    "url":  "https://github.com/oldrobloxcorptestingapi/VR-Standalone-soundboard/releases/download/v3.4/VR.Soundboard.Studio.exe",
+    "sha256":  "905aab45f54dfefcc839e54c74a2a4b754cd67961edc402f2bcf11396713f16e",
+    "notes":  "Added Voice changer route support./nNew voices feature.",
+    "mandatory":  true
 }
